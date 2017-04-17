@@ -1,0 +1,27 @@
+{
+    "name": "pvsaintpe/bitrefill",
+    "description": "Component for Bitrefill API",
+    "keywords": [
+        "bitrefill",
+        "bitcoin",
+        "api"
+    ],
+    "type": "yii2-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Veselov Pavel",
+            "email": "pvsaintpe@mail.ru"
+        }
+    ],
+    "require": {
+        "phpdocumentor/reflection": "3.0.*"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "bitrefill\\": "src/"
+        }
+    },
+    "version": "1.0.01"
+}
