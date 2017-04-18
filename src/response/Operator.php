@@ -2,8 +2,13 @@
 
 namespace bitrefill\response;
 
-class Operator extends AltOperator
+use bitrefill\base\Object;
+
+class Operator extends Object
 {
+    public $name;
+    public $slug;
+    public $logoImage;
     public $currency;
     public $isRanged;
     public $isPinBased;

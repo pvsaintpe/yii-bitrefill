@@ -10,5 +10,11 @@ class Country extends Object
     public $name;
     public $slug;
     public $countryCallingCodes;
+    public $countryCode;
     public $currencies;
+
+    /**
+     * @var Operator[]
+     */
+    public $operators;
 }

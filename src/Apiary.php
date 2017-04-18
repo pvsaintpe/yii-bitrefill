@@ -2,12 +2,10 @@
 
 namespace bitrefill;
 
-use bitrefill\response\OrderInfoError;
+use bitrefill\response\Account;
+use bitrefill\response\Country;
 use bitrefill\response\LookupNumber;
 use bitrefill\response\Order;
-use bitrefill\response\OrderInfo;
-use bitrefill\response\OrderInfoWithPin;
-use bitrefill\response\OrderInfoWrong;
 
 /**
  * Class Apiary
@@ -15,12 +13,51 @@ use bitrefill\response\OrderInfoWrong;
  * @author Veselov Pavel
  * @package bitrefill\components
  */
-class Apiary
+abstract class Apiary
 {
-    protected static $api_key;
-    protected static $api_secret;
+    CONST API_URL = 'https://api.bitrefill.com/v1';
 
-    const API_URL = 'https://api.bitrefill.com/v1';
+    private static $_initiated;
+
+    /**
+     * @return string
+     */
+    abstract protected static function getApiKey();
+
+    /**
+     * @return string
+     */
+    abstract protected static function getApiSecret();
+
+    /**
+     * @param $message
+     * @param $type
+     * @throws
+     */
+    private static function error($message, $type = 'error')
+    {
+        throw new Exception(join(':', [$type, $message]));
+    }
+
+    /**
+     * @throws Exception
+     */
+    private static function _auth()
+    {
+        $ch = curl_init(static::API_URL);
+        curl_setopt($ch, CURLOPT_USERPWD, static::getApiKey() . ":" . static::getApiSecret());
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        if ($response == 'Hello World!') {
+            static::$_initiated = true;
+        } else {
+            static::error('Your account does not have access to this resource', 'Unhautorized');
+        }
+    }
 
     /**
      * @param string $url
@@ -31,6 +68,10 @@ class Apiary
      */
     private static function getResponse($url, $params = [], $post = false)
     {
+        if (!static::$_initiated) {
+            static::_auth();
+        }
+
         if (!empty($params)) {
             $url .= (($queryString = http_build_query($params)) ? '?' . $queryString : '');
         }
@@ -46,22 +87,25 @@ class Apiary
             "Content-Type: application/json"
         ));
 
-        if (is_array($post) && !empty($post)) {
-            $post = array_filter($post, function ($value) {
-                return ($value === null) ? false : true;
-            });
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post));
-        } else {
+        if ($post === false) {
             curl_setopt($ch, CURLOPT_POST, false);
+        } else {
+            curl_setopt($ch, CURLOPT_POST, true);
+
+            if (is_array($post) && !empty($post)) {
+                $post = array_filter($post, function ($value) {
+                    return ($value === null) ? false : true;
+                });
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($post));
+            }
         }
 
         $response = curl_exec($ch);
         $response = json_decode($response, true);
         curl_close($ch);
 
-        if ($response && is_array($response) && isset($response['error_code'])) {
-            throw new Exception($response['message'], $response['error_code']);
+        if ($response && is_array($response) && isset($response['message'])) {
+            static::error($response['errorMessage'], $response['errorType']);
         }
 
         return $response;
@@ -115,7 +159,7 @@ class Apiary
      *
      * @return Order
      */
-    public static function order(
+    public static function orderPlace(
         $operatorSlug,
         $valuePackage,
         $number,
@@ -156,27 +200,93 @@ class Apiary
      * If order is paid - it will contain delivery info.
      *
      * @param $order_id
-     * @return OrderInfo|OrderInfoWithPin|OrderInfoWrong|OrderInfoError
+     * @return Order
      */
     public static function orderInfo($order_id)
     {
         $response = static::getResponse(
             static::API_URL . '/order',
-            compact('order_id')
+            compact('order_id'),
+            false
         );
 
-        switch (true) {
-            case (isset($response['pinInfo'])):
-                return new OrderInfoWithPin($response);
-            case (isset($response['errorType'])):
-                return new OrderInfoWrong($response);
-            case (isset($response['message'])):
-                return new OrderInfoError($response);
-            default:
-                return new OrderInfo($response);
-        }
+        return new Order($response);
     }
 
+    /**
+     * Purchase an order you created
+     *
+     * @param $order_id
+     * @return Order
+     */
+    public static function orderPurchase($order_id)
+    {
+        $response = static::getResponse(
+            static::API_URL . "/order/$order_id/purchase",
+            null,
+            true
+        );
 
-    
+        return new Order($response);
+    }
+
+    /**
+     * Purchase a refill directly with your account balance.
+     *
+     * This call is a shortcut allowing you to create an order and pay for it at the same time.
+     *
+     * This route can only be used if you have a balance with us as this will pay the order
+     * from your account instead of asking for a second payment call.
+     *
+     * @param $operator
+     * @param $valuePackage
+     * @param $number
+     * @param $email
+     *
+     * @return Order
+     */
+    public static function purchase($operator, $valuePackage, $number, $email)
+    {
+        $response = static::getResponse(
+            static::API_URL . '/purchase',
+            null,
+            compact('operator', 'valuePackage', 'number', 'email')
+        );
+
+        return new Order($response);
+    }
+
+    /**
+     * Retrieve your account balance.
+     *
+     * @return Account
+     */
+    public static function accountBalance()
+    {
+        $response = static::getResponse(
+            static::API_URL . '/account'
+        );
+
+        return new Account($response);
+    }
+
+    /**
+     * Get a list of all countries and telcos currently supported.
+     * Update this list regularly as it changes.
+     *
+     * @return Country[]
+     */
+    public static function getInventory()
+    {
+        $response = static::getResponse(
+            static::API_URL . '/inventory'
+        );
+
+        $countries = [];
+        foreach ($response as $country) {
+            $countries[] = new Country($country);
+        }
+
+        return $countries;
+    }
 }
