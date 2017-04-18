@@ -47,5 +47,14 @@ class Apiary
         return $response;
     }
 
+    /**
+     * @param string $number
+     * @param string $operatorSlug null
+     * @return bool
+     */
+    public static function lookupNumber($number, $operatorSlug = null)
+    {
+        return true;
+    }
 
 }
