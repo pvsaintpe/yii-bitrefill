@@ -2,6 +2,7 @@
 
 namespace bitrefill\base;
 
+use bitrefill\Apiary;
 use phpDocumentor\Reflection\DocBlock;
 
 class Object
@@ -72,5 +73,28 @@ class Object
     public function getOtherAttributes()
     {
         return $this->otherAttributes;
+    }
+
+    /**
+     * @var Apiary
+     */
+    private $_apiary;
+
+    /**
+     * @param Apiary $apiary
+     * @return self
+     */
+    public function setApiary(Apiary $apiary)
+    {
+        $this->_apiary = $apiary;
+        return $this;
+    }
+
+    /**
+     * @return Apiary
+     */
+    public function getApiary()
+    {
+        return $this->_apiary;
     }
 }

@@ -33,8 +33,6 @@ class Order extends Object
     public $invoiceTime;
     public $expirationTime;
     public $orderId;
-    public $errorType;
-    public $errorMessage;
     public $willRetry;
     public $allowRetry;
     public $paidAmount;
@@ -50,18 +48,18 @@ class Order extends Object
     public $payment;
 
     /**
-     * @return Error|Order
+     * @return Order
      */
     public function orderInfo()
     {
-        return Apiary::orderInfo($this->orderId);
+        return $this->getApiary()->orderInfo($this->orderId);
     }
 
     /**
-     * @return Error|Order
+     * @return Order
      */
-    public function orderPurchaae()
+    public function orderPurchase()
     {
-        return Apiary::orderPurchase($this->orderId);
+        return $this->getApiary()->orderPurchase($this->orderId);
     }
 }

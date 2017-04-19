@@ -4,9 +4,10 @@
     "keywords": [
         "bitrefill",
         "bitcoin",
-        "api"
+        "api",
+        "yii1"
     ],
-    "type": "yii2-extension",
+    "type": "yii1-extension",
     "license": "MIT",
     "authors": [
         {
@@ -15,6 +16,8 @@
         }
     ],
     "require": {
+        "php": ">=5.0.0",
+        "yiisoft/yii": ">=1.1.0",
         "phpdocumentor/reflection": "3.0.*"
     },
     "minimum-stability": "stable",

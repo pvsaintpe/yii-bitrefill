@@ -6,6 +6,7 @@ use bitrefill\response\Account;
 use bitrefill\response\Country;
 use bitrefill\response\LookupNumber;
 use bitrefill\response\Order;
+use CApplicationComponent;
 
 /**
  * Class Apiary
@@ -13,39 +14,21 @@ use bitrefill\response\Order;
  * @author Veselov Pavel
  * @package bitrefill\components
  */
-abstract class Apiary
+class Apiary extends CApplicationComponent
 {
-    CONST API_URL = 'https://api.bitrefill.com/v1';
+    protected $api_url = 'https://api.bitrefill.com/v1';
+    protected $api_key;
+    protected $api_secret;
 
-    private static $_initiated;
-
-    /**
-     * @return string
-     */
-    abstract protected static function getApiKey();
-
-    /**
-     * @return string
-     */
-    abstract protected static function getApiSecret();
-
-    /**
-     * @param $message
-     * @param $type
-     * @throws
-     */
-    private static function error($message, $type = 'error')
-    {
-        throw new Exception(join(':', [$type, $message]));
-    }
+    private $_initiated;
 
     /**
      * @throws Exception
      */
-    private static function _auth()
+    private function _auth()
     {
-        $ch = curl_init(static::API_URL);
-        curl_setopt($ch, CURLOPT_USERPWD, static::getApiKey() . ":" . static::getApiSecret());
+        $ch = curl_init($this->api_url);
+        curl_setopt($ch, CURLOPT_USERPWD, $this->api_key . ":" . $this->api_secret);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_POST, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -53,9 +36,9 @@ abstract class Apiary
         curl_close($ch);
 
         if ($response == 'Hello World!') {
-            static::$_initiated = true;
+            $this->_initiated = true;
         } else {
-            static::error('Your account does not have access to this resource', 'Unhautorized');
+            throw new Exception('Your account does not have access to this resource');
         }
     }
 
@@ -66,10 +49,10 @@ abstract class Apiary
      * @return mixed
      * @throws Exception
      */
-    private static function getResponse($url, $params = [], $post = false)
+    private function getResponse($url, $params = [], $post = false)
     {
-        if (!static::$_initiated) {
-            static::_auth();
+        if (!$this->_initiated) {
+            $this->_auth();
         }
 
         if (!empty($params)) {
@@ -105,7 +88,17 @@ abstract class Apiary
         curl_close($ch);
 
         if ($response && is_array($response) && isset($response['message'])) {
-            static::error($response['errorMessage'], $response['errorType']);
+            throw new Exception(join(':', [
+                $response['status'],
+                $response['message'],
+            ]));
+        }
+
+        if ($response && is_array($response) && isset($response['errorMessage'])) {
+            throw new Exception(join(':', [
+                $response['errorType'],
+                $response['errorMessage'],
+            ]));
         }
 
         return $response;
@@ -131,14 +124,17 @@ abstract class Apiary
      *
      * @return LookupNumber
      */
-    public static function lookupNumber($number, $operatorSlug = null)
+    public function lookupNumber($number, $operatorSlug = null)
     {
-        $response = static::getResponse(
-            static::API_URL . '/lookupNumber',
+        $response = $this->getResponse(
+            $this->api_url . '/lookup_number',
             compact('number', 'operatorSlug')
         );
 
-        return new LookupNumber($response);
+        $lookupNumber = new LookupNumber($response);
+        $lookupNumber->setApiary($this);
+
+        return $lookupNumber;
     }
 
     /**
@@ -159,7 +155,7 @@ abstract class Apiary
      *
      * @return Order
      */
-    public static function orderPlace(
+    public function orderPlace(
         $operatorSlug,
         $valuePackage,
         $number,
@@ -171,8 +167,8 @@ abstract class Apiary
         $userRef = null
     )
     {
-        $response = static::getResponse(
-            static::API_URL . '/order',
+        $response = $this->getResponse(
+            $this->api_url . '/order',
             null,
             compact(
                 'operatorSlug',
@@ -187,7 +183,10 @@ abstract class Apiary
             )
         );
 
-        return new Order($response);
+        $order = new Order($response);
+        $order->setApiary($this);
+
+        return $order;
     }
 
     /**
@@ -202,15 +201,18 @@ abstract class Apiary
      * @param $order_id
      * @return Order
      */
-    public static function orderInfo($order_id)
+    public function orderInfo($order_id)
     {
-        $response = static::getResponse(
-            static::API_URL . '/order',
+        $response = $this->getResponse(
+            $this->api_url . '/order',
             compact('order_id'),
             false
         );
 
-        return new Order($response);
+        $order = new Order($response);
+        $order->setApiary($this);
+
+        return $order;
     }
 
     /**
@@ -219,15 +221,18 @@ abstract class Apiary
      * @param $order_id
      * @return Order
      */
-    public static function orderPurchase($order_id)
+    public function orderPurchase($order_id)
     {
-        $response = static::getResponse(
-            static::API_URL . "/order/$order_id/purchase",
+        $response = $this->getResponse(
+            $this->api_url . "/order/$order_id/purchase",
             null,
             true
         );
 
-        return new Order($response);
+        $order = new Order($response);
+        $order->setApiary($this);
+
+        return $order;
     }
 
     /**
@@ -245,15 +250,18 @@ abstract class Apiary
      *
      * @return Order
      */
-    public static function purchase($operator, $valuePackage, $number, $email)
+    public function purchase($operator, $valuePackage, $number, $email)
     {
-        $response = static::getResponse(
-            static::API_URL . '/purchase',
+        $response = $this->getResponse(
+            $this->api_url . '/purchase',
             null,
             compact('operator', 'valuePackage', 'number', 'email')
         );
 
-        return new Order($response);
+        $order = new Order($response);
+        $order->setApiary($this);
+
+        return $order;
     }
 
     /**
@@ -261,13 +269,16 @@ abstract class Apiary
      *
      * @return Account
      */
-    public static function accountBalance()
+    public function accountBalance()
     {
-        $response = static::getResponse(
-            static::API_URL . '/account'
+        $response = $this->getResponse(
+            $this->api_url . '/account_balance'
         );
 
-        return new Account($response);
+        $account = new Account($response);
+        $account->setApiary($this);
+
+        return $account;
     }
 
     /**
@@ -276,15 +287,18 @@ abstract class Apiary
      *
      * @return Country[]
      */
-    public static function getInventory()
+    public function getInventory()
     {
-        $response = static::getResponse(
-            static::API_URL . '/inventory'
+        $response = $this->getResponse(
+            $this->api_url . '/inventory'
         );
 
         $countries = [];
-        foreach ($response as $country) {
-            $countries[] = new Country($country);
+        foreach ($response as $countryResponse) {
+            $country = new Country($countryResponse);
+            $country->setApiary($this);
+
+            $countries[] = $country;
         }
 
         return $countries;
