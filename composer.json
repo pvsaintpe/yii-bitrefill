@@ -1,11 +1,11 @@
 {
-    "name": "pvsaintpe/bitrefill",
+    "name": "pvsaintpe/yii-bitrefill",
     "description": "Component for Bitrefill API",
     "keywords": [
         "bitrefill",
         "bitcoin",
         "api",
-        "yii1"
+        "yii"
     ],
     "type": "yii1-extension",
     "license": "MIT",
