@@ -3,7 +3,7 @@
     "description": "Component for Bitrefill API",
     "keywords": [
         "bitrefill",
-        "bitcoin",
+        "bitcoin api",
         "api",
         "yii"
     ],
