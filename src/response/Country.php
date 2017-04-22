@@ -14,7 +14,7 @@ class Country extends Object
     public $currencies;
 
     /**
-     * @var Operator[]
+     * @var \bitrefill\response\Operator[]
      */
     public $operators;
 }

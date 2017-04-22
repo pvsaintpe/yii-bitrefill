@@ -35,7 +35,7 @@ class Apiary extends CApplicationComponent
         $response = curl_exec($ch);
         curl_close($ch);
 
-        if ($response == 'Hello World!') {
+        if (strpos($response, 'Hello World!') !== false) {
             $this->_initiated = true;
         } else {
             throw new Exception('Your account does not have access to this resource');
@@ -62,6 +62,7 @@ class Apiary extends CApplicationComponent
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_USERPWD, $this->api_key . ":" . $this->api_secret);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
@@ -204,8 +205,8 @@ class Apiary extends CApplicationComponent
     public function orderInfo($order_id)
     {
         $response = $this->getResponse(
-            $this->api_url . '/order',
-            compact('order_id'),
+            $this->api_url . '/order/' . $order_id,
+            null,
             false
         );
 
@@ -243,19 +244,19 @@ class Apiary extends CApplicationComponent
      * This route can only be used if you have a balance with us as this will pay the order
      * from your account instead of asking for a second payment call.
      *
-     * @param $operator
-     * @param $valuePackage
-     * @param $number
-     * @param $email
+     * @param string $operatorSlug
+     * @param string $valuePackage
+     * @param string $number
+     * @param string $email
      *
      * @return Order
      */
-    public function purchase($operator, $valuePackage, $number, $email)
+    public function purchase($operatorSlug, $valuePackage, $number, $email)
     {
         $response = $this->getResponse(
             $this->api_url . '/purchase',
             null,
-            compact('operator', 'valuePackage', 'number', 'email')
+            compact('operatorSlug', 'valuePackage', 'number', 'email')
         );
 
         $order = new Order($response);

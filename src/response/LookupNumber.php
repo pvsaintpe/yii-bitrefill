@@ -7,17 +7,17 @@ use bitrefill\base\Object;
 class LookupNumber extends Object
 {
     /**
-     * @var Country
+     * @var \bitrefill\response\Country
      */
     public $country;
 
     /**
-     * @var Operator
+     * @var \bitrefill\response\Operator
      */
     public $operator;
 
     /**
-     * @var Operator[]
+     * @var \bitrefill\response\Operator[]
      */
     public $altOperators;
 }

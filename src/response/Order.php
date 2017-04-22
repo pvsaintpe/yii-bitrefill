@@ -2,7 +2,6 @@
 
 namespace bitrefill\response;
 
-use bitrefill\Apiary;
 use bitrefill\base\Object;
 
 class Order extends Object
@@ -10,7 +9,9 @@ class Order extends Object
     public $id;
     public $email;
     public $number;
-    public $paymentRecieved;
+    public $paymentReceived;
+    public $accessToken;
+    public $userRef;
     public $sent;
     public $refunded;
     public $value;
@@ -38,17 +39,17 @@ class Order extends Object
     public $paidAmount;
 
     /**
-     * @var PinInfo
+     * @var \bitrefill\response\PinInfo
      */
     public $pinInfo;
 
     /**
-     * @var Payment
+     * @var \bitrefill\response\Payment
      */
     public $payment;
 
     /**
-     * @return Order
+     * @return \bitrefill\response\Order
      */
     public function orderInfo()
     {
@@ -56,7 +57,7 @@ class Order extends Object
     }
 
     /**
-     * @return Order
+     * @return \bitrefill\response\Order
      */
     public function orderPurchase()
     {

@@ -14,12 +14,12 @@ class Operator extends Object
     public $isPinBased;
 
     /**
-     * @var Range
+     * @var \bitrefill\response\Range
      */
     public $range;
 
     /**
-     * @var Package[]
+     * @var \bitrefill\response\Package[]
      */
     public $packages;
 }
