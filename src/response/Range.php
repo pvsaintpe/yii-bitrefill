@@ -11,4 +11,6 @@ class Range extends Object
     public $step;
     public $customerSatoshiPriceRate;
     public $customerEurPriceRate;
+    public $customerPriceRate;
+    public $userPriceRate;
 }

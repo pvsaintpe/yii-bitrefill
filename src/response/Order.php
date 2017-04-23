@@ -63,4 +63,23 @@ class Order extends Object
     {
         return $this->getApiary()->orderPurchase($this->orderId);
     }
+
+    /**
+     * @param string $currency null
+     * @return mixed
+     */
+    public function getPrice($currency = null)
+    {
+        if (!$currency) {
+            $account = $this->getApiary()->accountBalance();
+            $currency = $account->getCurrency();
+        }
+
+        switch ($currency) {
+            case 'USD': return $this->usdPrice;
+            case 'EUR': return $this->eurPrice;
+            case 'BTC': return $this->btcPrice;
+            default: return $this->satoshiPrice;
+        }
+    }
 }
