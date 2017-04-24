@@ -20,13 +20,15 @@ class Apiary extends CApplicationComponent
     protected $api_key;
     protected $api_secret;
 
-    private $_initiated;
+    protected $initiated;
 
     /**
      * @throws Exception
      */
-    private function _auth()
+    protected function auth()
     {
+        $this->initiated = false;
+
         $ch = curl_init($this->api_url);
         curl_setopt($ch, CURLOPT_USERPWD, $this->api_key . ":" . $this->api_secret);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
@@ -36,7 +38,7 @@ class Apiary extends CApplicationComponent
         curl_close($ch);
 
         if (strpos($response, 'Hello World!') !== false) {
-            $this->_initiated = true;
+            $this->initiated = true;
         } else {
             throw new Exception('Your account does not have access to this resource');
         }
@@ -51,8 +53,8 @@ class Apiary extends CApplicationComponent
      */
     private function getResponse($url, $params = [], $post = false)
     {
-        if (!$this->_initiated) {
-            $this->_auth();
+        if (!$this->initiated) {
+            $this->auth();
         }
 
         if (!empty($params)) {
