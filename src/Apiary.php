@@ -28,6 +28,8 @@ class Apiary extends CApplicationComponent
     protected function auth()
     {
         $this->initiated = false;
+
+        // v.1.0.23
         $ch = curl_init($this->api_url);
         curl_setopt($ch, CURLOPT_USERPWD, $this->api_key . ":" . $this->api_secret);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
